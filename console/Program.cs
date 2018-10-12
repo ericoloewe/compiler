@@ -9,12 +9,29 @@ namespace Console
         private static Syntactic _syntactic = new Syntactic();
         private static Semantic _semantic = new Semantic();
 
-        private static void Main(string[] args)
+        private static void Main()
         {
-            var stream = _semantic.Run(File.Open(_inFilePath, FileMode.Open));
-            var streamReader = new StreamReader(stream);
+            //check if file exists to avoid 
+            if (!File.Exists(_inFilePath))
+            {
+                //abort mission if it doesn't
+                System.Console.WriteLine("File does not exist.");
+                return;
+            }
 
-            System.Console.WriteLine(streamReader.ReadToEnd());
+            //go ahead and open the file if it exists.
+            var stream = _semantic.Run(File.Open(_inFilePath, FileMode.Open));
+
+            var fileContent = "";
+
+            //use the using keyword to dispose the objects when you are done with them. 
+            //or you can use streamReader.Dispose(); if you prefer to do so.
+            using (var streamReader = new StreamReader(stream))
+            {
+                fileContent = streamReader.ReadToEnd();
+            }
+
+            System.Console.WriteLine(fileContent);
         }
     }
 }
