@@ -24,7 +24,7 @@ namespace Compiler
 
         public SemanticStackNode Push(string c, int r)
         {
-            return this.Push(new SemanticStackNode(c, r));
+            return Push(new SemanticStackNode(c, r));
         }
 
         public SemanticStackNode Push(SemanticStackNode nodo)
@@ -44,8 +44,8 @@ namespace Compiler
 
         public SemanticStackNode(string code, int rule)
         {
-            this.Code = code;
-            this.PushedRule = rule;
+            Code = code;
+            PushedRule = rule;
         }
     }
 }

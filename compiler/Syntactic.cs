@@ -398,8 +398,6 @@ namespace Compiler
 
         private void BuscaProximoToken()
         {
-            int i, j;
-
             StringBuilder sbLexema = new StringBuilder("");
 
             while ((_lookAhead == 9) ||
@@ -672,9 +670,9 @@ namespace Compiler
                 default: tokenLexema.Append("N/A"); break;
             }
 
-            Console.WriteLine(tokenLexema.ToString() + " ( " + _lexema + " )");
+            Console.WriteLine(tokenLexema + " ( " + _lexema + " )");
 
-            AcumulaToken(tokenLexema.ToString() + " ( " + _lexema + " )");
+            AcumulaToken(tokenLexema + " ( " + _lexema + " )");
             tokenLexema.Append(_lexema);
         }
 

@@ -25,7 +25,7 @@ namespace Compiler
         // Variaveis criadas para o semantico
         private string _ultimoLexema;
         private StringBuilder _codigoPython = new StringBuilder();
-        private int _nivelIdentacao = 0;
+        private int _nivelIdentacao;
         private string _exp0;
         private string _exp1;
         private string _exp2;
@@ -685,9 +685,9 @@ namespace Compiler
                 default: tokenLexema.Append("N/A"); break;
             }
 
-            Console.WriteLine(tokenLexema.ToString() + " ( " + _lexema + " )");
+            Console.WriteLine(tokenLexema + " ( " + _lexema + " )");
 
-            AcumulaToken(tokenLexema.ToString() + " ( " + _lexema + " )");
+            AcumulaToken(tokenLexema + " ( " + _lexema + " )");
             tokenLexema.Append(_lexema);
         }
 
