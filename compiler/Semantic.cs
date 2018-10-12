@@ -17,7 +17,6 @@ namespace compiler
         string exp_3;
         SemanticStack pilhaSemantica = new SemanticStack();
         private Compiler compiler;
-        int tipoDeComparacao;
         String simboloComparacao;
 
         public Semantic(Compiler compiler)
@@ -25,10 +24,10 @@ namespace compiler
             this.compiler = compiler;
         }
 
-        void regraSemantica(int numeroRegra)
+        public void regraSemantica(int numeroRegra)
         {
-
             Console.WriteLine("Regra Semantica " + numeroRegra);
+
             switch (numeroRegra)
             {
                 case 0:
@@ -109,7 +108,7 @@ namespace compiler
                 case 13:
                     exp_2 = pilhaSemantica.Pop().Code;
                     exp_1 = pilhaSemantica.Pop().Code;
-                    simboloComparacao = traduzSimbolo(tipoDeComparacao);
+                    simboloComparacao = traduzSimbolo(compiler.tipoDeComparacao);
                     exp_0 = "( " + exp_1 + simboloComparacao + exp_2 + " )";
                     pilhaSemantica.Push(exp_0, 13); // Empilha expressao condicional
                     break;
@@ -150,9 +149,9 @@ namespace compiler
             }
         }
 
-        private String traduzSimbolo(int tipoDeComparacao)
+        private String traduzSimbolo(CompilerCodes tipoDeComparacao)
         {
-            switch ((CompilerCodes)tipoDeComparacao)
+            switch (tipoDeComparacao)
             {
                 case T_MAIOR: return " > ";
                 case T_MENOR: return " < ";

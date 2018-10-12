@@ -16,6 +16,7 @@ namespace compiler
         public Lexicon lexicon { get; set; }
         public Syntactic syntactic { get; set; }
         public Semantic semantic { get; set; }
+        public CompilerCodes tipoDeComparacao { get; set; }
 
         public Compiler()
         {
@@ -62,15 +63,19 @@ namespace compiler
             {
                 showMessageDialog(errorMessage, "Erro Sintático!");
             }
+            else if (compilationState == E_ERRO_SEMANTICO)
+            {
+                showMessageDialog(errorMessage, "Erro Semântico!");
+            }
             else
             {
                 showMessageDialog("Análise Sintática terminada sem erros", "Análise Sintática terminada!");
             }
         }
 
-        public void showMessageDialog(string mensagemDeErro, string message)
+        public void showMessageDialog(string errorMessage, string message)
         {
-            Console.WriteLine(mensagemDeErro, message);
+            Console.WriteLine(errorMessage, message);
         }
     }
 }

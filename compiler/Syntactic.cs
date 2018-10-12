@@ -24,6 +24,8 @@ namespace compiler
         // <P> ::= '}}' <comandos> '{{'  
         private void p()
         {
+            compiler.semantic.regraSemantica(0);
+
             if (token == T_ABREPROG)
             {
                 compiler.lexicon.buscaProximoToken();
@@ -31,6 +33,7 @@ namespace compiler
                 if (token == T_FECHAPROG)
                 {
                     compiler.lexicon.buscaProximoToken();
+                    compiler.semantic.regraSemantica(1);
                 }
                 else
                 {
@@ -54,12 +57,10 @@ namespace compiler
                 comandos();
             }
         }
-
         // Exemplo sem recursividade
         private void comandosAlternativo()
         {
             comando();
-
             while (token != T_CABO)
             {
                 compiler.lexicon.buscaProximoToken();
@@ -78,8 +79,118 @@ namespace compiler
                 case T_MEMOSTRA: comandoEscrita(); break;
                 case T_MECAPTURA: comandoLeitura(); break;
                 case T_MEREPETE: comandoPara(); break;
+                case T_MECOMPARA: comandoSe(); break;
+                case T_MECONTINUA: comandoEnquanto(); break;
                 default:
                     registraErroSintatico("Erro Sintático na linha: " + linhaAtual + "\nReconhecido ao atingir a coluna: " + colunaAtual + "\nLinha do Erro: <" + linhaFonte + ">\nComando não identificado va aprender a programar pois encontrei: " + lexema); break;
+            }
+        }
+
+        /*
+        * <cmd_enquanto>   ::= MECONTINUA <expcond> ']' <comandos> '['              
+        */
+        private void comandoEnquanto()
+        {
+            if (token == T_MECONTINUA)
+            {
+                compiler.lexicon.buscaProximoToken();
+                expressaoCondicional();
+                compiler.semantic.regraSemantica(18);
+                if (token == T_ABRE_BLOCO)
+                {
+                    compiler.lexicon.buscaProximoToken();
+                    comandos();
+                    if (token == T_FECHA_BLOCO)
+                    {
+                        compiler.lexicon.buscaProximoToken();
+                        compiler.semantic.regraSemantica(19);
+                    }
+                    else
+                    {
+                        registraErroSintatico("Erro Sintático na linha: " + linhaAtual + "\nReconhecido ao atingir a coluna: " + colunaAtual + "\nLinha do Erro: <" + linhaFonte + ">\nFecha bloco esperado, mas encontrei: " + lexema);
+                    }
+                }
+                else
+                {
+                    registraErroSintatico("Erro Sintático na linha: " + linhaAtual + "\nReconhecido ao atingir a coluna: " + colunaAtual + "\nLinha do Erro: <" + linhaFonte + ">\nAbre bloco esperado, mas encontrei: " + lexema);
+                }
+            }
+        }
+
+        /* <cmd_se>         ::= 'MECOMPARA' <expcond> '?' 
+        *                      ']' <comandos> '['
+        *                      <else>
+        */
+        private void comandoSe()
+        {
+
+            if (token == T_MECOMPARA)
+            {
+                compiler.lexicon.buscaProximoToken();
+                expressaoCondicional();
+                compiler.semantic.regraSemantica(14);
+                if (token == T_ENTAO)
+                {
+                    compiler.lexicon.buscaProximoToken();
+                    if (token == T_ABRE_BLOCO)
+                    {
+                        compiler.lexicon.buscaProximoToken();
+                        comandos();
+                        if (token == T_FECHA_BLOCO)
+                        {
+                            compiler.lexicon.buscaProximoToken();
+                            compiler.semantic.regraSemantica(15);
+                            senao();
+                        }
+                        else
+                        {
+                            registraErroSintatico("Erro Sintático na linha: " + linhaAtual + "\nReconhecido ao atingir a coluna: " + colunaAtual + "\nLinha do Erro: <" + linhaFonte + ">\nFecha bloco esperado, mas encontrei: " + lexema);
+                        }
+                    }
+                    else
+                    {
+                        registraErroSintatico("Erro Sintático na linha: " + linhaAtual + "\nReconhecido ao atingir a coluna: " + colunaAtual + "\nLinha do Erro: <" + linhaFonte + ">\nAbre bloco esperado, mas encontrei: " + lexema);
+                    }
+
+                }
+                else
+                {
+                    registraErroSintatico("Erro Sintático na linha: " + linhaAtual + "\nReconhecido ao atingir a coluna: " + colunaAtual + "\nLinha do Erro: <" + linhaFonte + ">\nMECOMPARA esperado, mas encontrei: " + lexema);
+                }
+            }
+            else
+            {
+                registraErroSintatico("Erro Sintático na linha: " + linhaAtual + "\nReconhecido ao atingir a coluna: " + colunaAtual + "\nLinha do Erro: <" + linhaFonte + ">\nMECOMPARA esperado, mas encontrei: " + lexema);
+            }
+        }
+
+        /*
+        * <cmd_else>       ::= ':' ']' <comandos> '[' 
+        *                  |   {epsilon} */
+        private void senao()
+        {
+            if (token == T_SENAO)
+            {
+                compiler.lexicon.buscaProximoToken();
+                compiler.semantic.regraSemantica(16);
+                if (token == T_ABRE_BLOCO)
+                {
+                    compiler.lexicon.buscaProximoToken();
+                    comandos();
+                    if (token == T_FECHA_BLOCO)
+                    {
+                        compiler.lexicon.buscaProximoToken();
+                        compiler.semantic.regraSemantica(17);
+                    }
+                    else
+                    {
+                        registraErroSintatico("Erro Sintático na linha: " + linhaAtual + "\nReconhecido ao atingir a coluna: " + colunaAtual + "\nLinha do Erro: <" + linhaFonte + ">\nFecha bloco esperado, mas encontrei: " + lexema);
+                    }
+                }
+                else
+                {
+                    registraErroSintatico("Erro Sintático na linha: " + linhaAtual + "\nReconhecido ao atingir a coluna: " + colunaAtual + "\nLinha do Erro: <" + linhaFonte + ">\nAbre bloco esperado, mas encontrei: " + lexema);
+                }
             }
         }
 
@@ -92,6 +203,7 @@ namespace compiler
             {
                 compiler.lexicon.buscaProximoToken();
                 expressao();
+                compiler.semantic.regraSemantica(8);
             }
             else
             {
@@ -112,6 +224,7 @@ namespace compiler
                     if (token == T_FECHA_PAR)
                     {
                         compiler.lexicon.buscaProximoToken();
+                        compiler.semantic.regraSemantica(12);
                     }
                     else
                     {
@@ -142,6 +255,7 @@ namespace compiler
                     if (token == T_FECHA_PAR)
                     {
                         compiler.lexicon.buscaProximoToken();
+                        compiler.semantic.regraSemantica(9);
                     }
                     else
                     {
@@ -177,10 +291,12 @@ namespace compiler
                         if (token == T_ABRE_BLOCO)
                         {
                             compiler.lexicon.buscaProximoToken();
+                            compiler.semantic.regraSemantica(10);
                             comandos();
                             if (token == T_FECHA_BLOCO)
                             {
                                 compiler.lexicon.buscaProximoToken();
+                                compiler.semantic.regraSemantica(11);
                             }
                             else
                             {
@@ -223,8 +339,10 @@ namespace compiler
                  token == T_DIFERENTE || token == T_MAIOR ||
                  token == T_MAIORIGUAL || token == T_IGUAL)
             {
+                compiler.tipoDeComparacao = token;
                 compiler.lexicon.buscaProximoToken();
                 expressao();
+                compiler.semantic.regraSemantica(13);
             }
             else
             {
@@ -238,11 +356,19 @@ namespace compiler
         private void expressao()
         {
             termo();
-            if (token == T_SOMA || token == T_SUBTRAI)
+            if (token == T_SOMA)
             {
                 compiler.lexicon.buscaProximoToken();
                 expressao();
+                compiler.semantic.regraSemantica(6);
             }
+            else if (token == T_SUBTRAI)
+            {
+                compiler.lexicon.buscaProximoToken();
+                expressao();
+                compiler.semantic.regraSemantica(7);
+            }
+
         }
 
         private void expressaoAlternativa()
@@ -260,11 +386,30 @@ namespace compiler
         //         |   <fator>
         private void termo()
         {
-            fator();
-            if (token == T_MULTIPLICA || token == T_DIVIDE)
+            exponenciacao();
+            if (token == T_MULTIPLICA)
             {
                 compiler.lexicon.buscaProximoToken();
                 termo();
+                compiler.semantic.regraSemantica(4);
+            }
+            else if (token == T_DIVIDE)
+            {
+                compiler.lexicon.buscaProximoToken();
+                termo();
+                compiler.semantic.regraSemantica(5);
+            }
+
+        }
+
+        private void exponenciacao()
+        {
+            fator();
+            if (token == T_ELEVADO)
+            {
+                compiler.lexicon.buscaProximoToken();
+                exponenciacao();
+                compiler.semantic.regraSemantica(20);
             }
         }
 
@@ -287,6 +432,7 @@ namespace compiler
             if (token == T_ID)
             {
                 compiler.lexicon.buscaProximoToken();
+                compiler.semantic.regraSemantica(2);
             }
             else
             {
@@ -300,6 +446,7 @@ namespace compiler
             if (token == T_NUMERO)
             {
                 compiler.lexicon.buscaProximoToken();
+                compiler.semantic.regraSemantica(3);
             }
             else
             {
