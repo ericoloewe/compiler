@@ -1,6 +1,6 @@
 namespace compiler
 {
-    enum CompilerCodes
+    public enum CompilerCodes
     {
         T_ABREPROG = 1,
         T_FECHAPROG = 2,
@@ -35,6 +35,7 @@ namespace compiler
         T_SENAO = 28,
 
         T_MECONTINUA = 29,
+        T_ELEVADO = 30,
 
         T_FIM_FONTE = 90,
         T_ERRO_LEX = 98,

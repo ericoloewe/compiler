@@ -7,11 +7,10 @@ namespace compiler
     public class SemanticStack
     {
         private Stack stack;
-        private StringBuilder semanticStackOut;
 
         public SemanticStack()
         {
-            stack = new Stack();
+            this.stack = new Stack();
         }
 
         public SemanticStackNode Pop()
@@ -24,7 +23,7 @@ namespace compiler
 
         public SemanticStackNode Push(String c, int r)
         {
-            return this.Push(new SemanticStackNode(c, r));
+            return Push(new SemanticStackNode(c, r));
         }
 
         public SemanticStackNode Push(SemanticStackNode nodo)
@@ -38,7 +37,6 @@ namespace compiler
 
     public class SemanticStackNode
     {
-
         public String Code { get; set; }
         public int PushedRule { get; set; }
 
