@@ -1,260 +1,260 @@
 using System;
 using System.IO;
 using System.Text;
-using static compiler.CompilerCodes;
+using static Compiler.CompilerCode;
 
-namespace compiler
+namespace Compiler
 {
     public class Syntactic
     {
-        StreamReader streamReader;
-        char lookAhead;
-        CompilerCodes token;
-        String lexema;
-        int ponteiro;
-        String linhaFonte;
-        int linhaAtual;
-        int colunaAtual;
-        String mensagemDeErro;
-        StringBuilder tokensIdentificados = new StringBuilder();
+        private StreamReader _streamReader;
+        private char _lookAhead;
+        private CompilerCode _token;
+        private string _lexema;
+        private int _ponteiro;
+        private string _linhaFonte;
+        private int _linhaAtual;
+        private int _colunaAtual;
+        private string _mensagemDeErro;
+        private StringBuilder _tokensIdentificados = new StringBuilder();
 
         // Variaveis acrescentadas para o Sintatico
-        StringBuilder regrasReconhecidas = new StringBuilder();
-        CompilerCodes estadoCompilacao;
+        private StringBuilder _regrasReconhecidas = new StringBuilder();
+        private CompilerCode _estadoCompilacao;
 
         public Stream Run(Stream arqFonte)
         {
             var arqDestino = new StreamWriter(new MemoryStream());
 
-            linhaAtual = 0;
-            colunaAtual = 0;
-            ponteiro = 0;
-            linhaFonte = "";
-            token = T_NULO;
-            estadoCompilacao = E_SEM_ERROS;
-            mensagemDeErro = "";
-            tokensIdentificados.Append("Tokens reconhecidos: \n\n");
-            regrasReconhecidas.Append("\n\nRegras reconhecidas: \n\n");
-            streamReader = new StreamReader(arqFonte);
+            _linhaAtual = 0;
+            _colunaAtual = 0;
+            _ponteiro = 0;
+            _linhaFonte = "";
+            _token = Nulo;
+            _estadoCompilacao = ESemErros;
+            _mensagemDeErro = "";
+            _tokensIdentificados.Append("Tokens reconhecidos: \n\n");
+            _regrasReconhecidas.Append("\n\nRegras reconhecidas: \n\n");
+            _streamReader = new StreamReader(arqFonte);
 
             // posiciono no primeiro token	
-            movelookAhead();
-            buscaProximoToken();
-            analiseSintatica();
-            arqDestino.Write(tokensIdentificados.ToString());
-            arqDestino.Write(regrasReconhecidas.ToString());
+            MovelookAhead();
+            BuscaProximoToken();
+            AnaliseSintatica();
+            arqDestino.Write(_tokensIdentificados.ToString());
+            arqDestino.Write(_regrasReconhecidas.ToString());
             arqDestino.Write("\n\nStatus da Compilação:\n\n");
-            arqDestino.Write(mensagemDeErro);
+            arqDestino.Write(_mensagemDeErro);
             arqDestino.Close();
 
-            showMessageDialog("Arquivo Salvo: " + arqDestino, "Salvando Arquivo");
+            ShowMessageDialog("Arquivo Salvo: " + arqDestino, "Salvando Arquivo");
 
             return arqDestino.BaseStream;
         }
 
-        void analiseSintatica()
+        private void AnaliseSintatica()
         {
 
-            p();
+            P();
 
-            if (estadoCompilacao == E_ERRO_LEXICO)
+            if (_estadoCompilacao == EErroLexico)
             {
-                showMessageDialog(mensagemDeErro, "Erro Léxico!");
+                ShowMessageDialog(_mensagemDeErro, "Erro Léxico!");
             }
-            else if (estadoCompilacao == E_ERRO_SINTATICO)
+            else if (_estadoCompilacao == EErroSintatico)
             {
-                showMessageDialog(mensagemDeErro, "Erro Sintático!");
+                ShowMessageDialog(_mensagemDeErro, "Erro Sintático!");
             }
             else
             {
-                showMessageDialog("Análise Sintática terminada sem erros", "Análise Sintática terminada!");
+                ShowMessageDialog("Análise Sintática terminada sem erros", "Análise Sintática terminada!");
             }
         }
 
         // <P> ::= '}}' <comandos> '{{'  
-        private void p()
+        private void P()
         {
-            if (token == T_ABREPROG)
+            if (_token == Abreprog)
             {
-                buscaProximoToken();
-                comandos();
-                if (token == T_FECHAPROG)
+                BuscaProximoToken();
+                Comandos();
+                if (_token == Fechaprog)
                 {
-                    buscaProximoToken();
+                    BuscaProximoToken();
                 }
                 else
                 {
-                    registraErroSintatico("Erro Sintático na linha: " + linhaAtual + "\nReconhecido ao atingir a coluna: " + colunaAtual + "\nLinha do Erro: <" + linhaFonte + ">\nFECHA PROG {{ esperado, mas encontrei: " + lexema);
+                    RegistraErroSintatico("Erro Sintático na linha: " + _linhaAtual + "\nReconhecido ao atingir a coluna: " + _colunaAtual + "\nLinha do Erro: <" + _linhaFonte + ">\nFECHA PROG {{ esperado, mas encontrei: " + _lexema);
                 }
             }
             else
             {
-                registraErroSintatico("Erro Sintático na linha: " + linhaAtual + "\nReconhecido ao atingir a coluna: " + colunaAtual + "\nLinha do Erro: <" + linhaFonte + ">\nABRE PROG }} esperado, mas encontrei: " + lexema);
+                RegistraErroSintatico("Erro Sintático na linha: " + _linhaAtual + "\nReconhecido ao atingir a coluna: " + _colunaAtual + "\nLinha do Erro: <" + _linhaFonte + ">\nABRE PROG }} esperado, mas encontrei: " + _lexema);
             }
         }
 
         // <comandos> ::= <comando> 'CABO' <comandos>
         //            |   <comando>    
-        private void comandos()
+        private void Comandos()
         {
-            comando();
-            if (token == T_CABO)
+            Comando();
+            if (_token == Cabo)
             {
-                buscaProximoToken();
-                comandos();
+                BuscaProximoToken();
+                Comandos();
             }
         }
 
         // Exemplo sem recursividade
-        private void comandosAlternativo()
+        private void ComandosAlternativo()
         {
-            comando();
+            Comando();
 
-            while (token != T_CABO)
+            while (_token != Cabo)
             {
-                buscaProximoToken();
-                comando();
+                BuscaProximoToken();
+                Comando();
             }
         }
 
         // <comando> ::= <cmd_atribuicao>
         //           |   <cmd_escrita> 
         //           |   <cmd_leitura>
-        private void comando()
+        private void Comando()
         {
-            switch (token)
+            switch (_token)
             {
-                case T_ID: comandoAtribuicao(); break;
-                case T_MEMOSTRA: comandoEscrita(); break;
-                case T_MECAPTURA: comandoLeitura(); break;
-                case T_MEREPETE: comandoPara(); break;
+                case CompilerCode.Id: ComandoAtribuicao(); break;
+                case Memostra: ComandoEscrita(); break;
+                case Mecaptura: ComandoLeitura(); break;
+                case Merepete: ComandoPara(); break;
                 default:
-                    registraErroSintatico("Erro Sintático na linha: " + linhaAtual + "\nReconhecido ao atingir a coluna: " + colunaAtual + "\nLinha do Erro: <" + linhaFonte + ">\nComando não identificado va aprender a programar pois encontrei: " + lexema); break;
+                    RegistraErroSintatico("Erro Sintático na linha: " + _linhaAtual + "\nReconhecido ao atingir a coluna: " + _colunaAtual + "\nLinha do Erro: <" + _linhaFonte + ">\nComando não identificado va aprender a programar pois encontrei: " + _lexema); break;
             }
         }
 
         //  <cmd_atribuicao> ::= <id> 'VIRA' <exp>
-        private void comandoAtribuicao()
+        private void ComandoAtribuicao()
         {
 
-            id();
-            if (token == T_VIRA)
+            Id();
+            if (_token == Vira)
             {
-                buscaProximoToken();
-                expressao();
+                BuscaProximoToken();
+                Expressao();
             }
             else
             {
-                registraErroSintatico("Erro Sintático na linha: " + linhaAtual + "\nReconhecido ao atingir a coluna: " + colunaAtual + "\nLinha do Erro: <" + linhaFonte + ">\nVIRA esperado, mas encontrei: " + lexema);
+                RegistraErroSintatico("Erro Sintático na linha: " + _linhaAtual + "\nReconhecido ao atingir a coluna: " + _colunaAtual + "\nLinha do Erro: <" + _linhaFonte + ">\nVIRA esperado, mas encontrei: " + _lexema);
             }
         }
 
         // <cmd_escrita> ::= 'MEMOSTRA'')' <exp> '('
-        private void comandoEscrita()
+        private void ComandoEscrita()
         {
-            if (token == T_MEMOSTRA)
+            if (_token == Memostra)
             {
-                buscaProximoToken();
-                if (token == T_ABRE_PAR)
+                BuscaProximoToken();
+                if (_token == AbrePar)
                 {
-                    buscaProximoToken();
-                    expressao();
-                    if (token == T_FECHA_PAR)
+                    BuscaProximoToken();
+                    Expressao();
+                    if (_token == FechaPar)
                     {
-                        buscaProximoToken();
+                        BuscaProximoToken();
                     }
                     else
                     {
-                        registraErroSintatico("Erro Sintático na linha: " + linhaAtual + "\nReconhecido ao atingir a coluna: " + colunaAtual + "\nLinha do Erro: <" + linhaFonte + ">\n(*)Fecha parentesis esperado, mas encontrei: " + lexema);
+                        RegistraErroSintatico("Erro Sintático na linha: " + _linhaAtual + "\nReconhecido ao atingir a coluna: " + _colunaAtual + "\nLinha do Erro: <" + _linhaFonte + ">\n(*)Fecha parentesis esperado, mas encontrei: " + _lexema);
                     }
                 }
                 else
                 {
-                    registraErroSintatico("Erro Sintático na linha: " + linhaAtual + "\nReconhecido ao atingir a coluna: " + colunaAtual + "\nLinha do Erro: <" + linhaFonte + ">\nAbre parentesis esperado, mas encontrei: " + lexema);
+                    RegistraErroSintatico("Erro Sintático na linha: " + _linhaAtual + "\nReconhecido ao atingir a coluna: " + _colunaAtual + "\nLinha do Erro: <" + _linhaFonte + ">\nAbre parentesis esperado, mas encontrei: " + _lexema);
                 }
             }
             else
             {
-                registraErroSintatico("Erro Sintático na linha: " + linhaAtual + "\nReconhecido ao atingir a coluna: " + colunaAtual + "\nLinha do Erro: <" + linhaFonte + ">\nMEMOSTRA esperado, mas encontrei: " + lexema);
+                RegistraErroSintatico("Erro Sintático na linha: " + _linhaAtual + "\nReconhecido ao atingir a coluna: " + _colunaAtual + "\nLinha do Erro: <" + _linhaFonte + ">\nMEMOSTRA esperado, mas encontrei: " + _lexema);
             }
         }
 
         // <cmd_leitura> ::= 'MECAPTURA' ')' <id> '('
-        private void comandoLeitura()
+        private void ComandoLeitura()
         {
-            if (token == T_MECAPTURA)
+            if (_token == Mecaptura)
             {
-                buscaProximoToken();
-                if (token == T_ABRE_PAR)
+                BuscaProximoToken();
+                if (_token == AbrePar)
                 {
-                    buscaProximoToken();
-                    id();
-                    if (token == T_FECHA_PAR)
+                    BuscaProximoToken();
+                    Id();
+                    if (_token == FechaPar)
                     {
-                        buscaProximoToken();
+                        BuscaProximoToken();
                     }
                     else
                     {
-                        registraErroSintatico("Erro Sintático na linha: " + linhaAtual + "\nReconhecido ao atingir a coluna: " + colunaAtual + "\nLinha do Erro: <" + linhaFonte + ">\n(1)Fecha parentesis esperado, mas encontrei: " + lexema);
+                        RegistraErroSintatico("Erro Sintático na linha: " + _linhaAtual + "\nReconhecido ao atingir a coluna: " + _colunaAtual + "\nLinha do Erro: <" + _linhaFonte + ">\n(1)Fecha parentesis esperado, mas encontrei: " + _lexema);
                     }
                 }
                 else
                 {
-                    registraErroSintatico("Erro Sintático na linha: " + linhaAtual + "\nReconhecido ao atingir a coluna: " + colunaAtual + "\nLinha do Erro: <" + linhaFonte + ">\nAbre parentesis esperado, mas encontrei: " + lexema);
+                    RegistraErroSintatico("Erro Sintático na linha: " + _linhaAtual + "\nReconhecido ao atingir a coluna: " + _colunaAtual + "\nLinha do Erro: <" + _linhaFonte + ">\nAbre parentesis esperado, mas encontrei: " + _lexema);
                 }
             }
             else
             {
-                registraErroSintatico("Erro Sintático na linha: " + linhaAtual + "\nReconhecido ao atingir a coluna: " + colunaAtual + "\nLinha do Erro: <" + linhaFonte + ">\nMECAPTURA esperado, mas encontrei: " + lexema);
+                RegistraErroSintatico("Erro Sintático na linha: " + _linhaAtual + "\nReconhecido ao atingir a coluna: " + _colunaAtual + "\nLinha do Erro: <" + _linhaFonte + ">\nMECAPTURA esperado, mas encontrei: " + _lexema);
             }
         }
 
         // <cmd_para>       ::= 'MEREPETE' <id> '=>' <exp> '==>' <exp> ']' <comandos> '['
-        private void comandoPara()
+        private void ComandoPara()
         {
-            if (token == T_MEREPETE)
+            if (_token == Merepete)
             {
-                buscaProximoToken();
-                id();
-                if (token == T_REPETE_DE)
+                BuscaProximoToken();
+                Id();
+                if (_token == RepeteDe)
                 {
-                    buscaProximoToken();
-                    expressao();
-                    if (token == T_REPETE_PARA)
+                    BuscaProximoToken();
+                    Expressao();
+                    if (_token == RepetePara)
                     {
-                        buscaProximoToken();
-                        expressao();
-                        if (token == T_ABRE_BLOCO)
+                        BuscaProximoToken();
+                        Expressao();
+                        if (_token == AbreBloco)
                         {
-                            buscaProximoToken();
-                            comandos();
-                            if (token == T_FECHA_BLOCO)
+                            BuscaProximoToken();
+                            Comandos();
+                            if (_token == FechaBloco)
                             {
-                                buscaProximoToken();
+                                BuscaProximoToken();
                             }
                             else
                             {
-                                registraErroSintatico("Erro Sintático na linha: " + linhaAtual + "\nReconhecido ao atingir a coluna: " + colunaAtual + "\nLinha do Erro: <" + linhaFonte + ">\nFecha bloco esperado, mas encontrei: " + lexema);
+                                RegistraErroSintatico("Erro Sintático na linha: " + _linhaAtual + "\nReconhecido ao atingir a coluna: " + _colunaAtual + "\nLinha do Erro: <" + _linhaFonte + ">\nFecha bloco esperado, mas encontrei: " + _lexema);
                             }
                         }
                         else
                         {
-                            registraErroSintatico("Erro Sintático na linha: " + linhaAtual + "\nReconhecido ao atingir a coluna: " + colunaAtual + "\nLinha do Erro: <" + linhaFonte + ">\nAbre bloco esperado, mas encontrei: " + lexema);
+                            RegistraErroSintatico("Erro Sintático na linha: " + _linhaAtual + "\nReconhecido ao atingir a coluna: " + _colunaAtual + "\nLinha do Erro: <" + _linhaFonte + ">\nAbre bloco esperado, mas encontrei: " + _lexema);
                         }
                     }
                     else
                     {
-                        registraErroSintatico("Erro Sintático na linha: " + linhaAtual + "\nReconhecido ao atingir a coluna: " + colunaAtual + "\nLinha do Erro: <" + linhaFonte + ">\nRepete para esperado, mas encontrei: " + lexema);
+                        RegistraErroSintatico("Erro Sintático na linha: " + _linhaAtual + "\nReconhecido ao atingir a coluna: " + _colunaAtual + "\nLinha do Erro: <" + _linhaFonte + ">\nRepete para esperado, mas encontrei: " + _lexema);
                     }
                 }
                 else
                 {
-                    registraErroSintatico("Erro Sintático na linha: " + linhaAtual + "\nReconhecido ao atingir a coluna: " + colunaAtual + "\nLinha do Erro: <" + linhaFonte + ">\nRepete de esperado, mas encontrei: " + lexema);
+                    RegistraErroSintatico("Erro Sintático na linha: " + _linhaAtual + "\nReconhecido ao atingir a coluna: " + _colunaAtual + "\nLinha do Erro: <" + _linhaFonte + ">\nRepete de esperado, mas encontrei: " + _lexema);
                 }
             }
             else
             {
-                registraErroSintatico("Erro Sintático na linha: " + linhaAtual + "\nReconhecido ao atingir a coluna: " + colunaAtual + "\nLinha do Erro: <" + linhaFonte + ">\nMEREPETE esperado, mas encontrei: " + lexema);
+                RegistraErroSintatico("Erro Sintático na linha: " + _linhaAtual + "\nReconhecido ao atingir a coluna: " + _colunaAtual + "\nLinha do Erro: <" + _linhaFonte + ">\nMEREPETE esperado, mas encontrei: " + _lexema);
             }
         }
 
@@ -266,434 +266,434 @@ namespace compiler
          *                  |   <exp> '>'  <exp>   
          *                  |   <exp> '==' <exp> 
          */
-        private void expressaoCondicional()
+        private void ExpressaoCondicional()
         {
-            expressao();
-            if (token == T_MENOR || token == T_MENORIGUAL ||
-                 token == T_DIFERENTE || token == T_MAIOR ||
-                 token == T_MAIORIGUAL || token == T_IGUAL)
+            Expressao();
+            if (_token == Menor || _token == Menorigual ||
+                 _token == Diferente || _token == Maior ||
+                 _token == Maiorigual || _token == Igual)
             {
-                buscaProximoToken();
-                expressao();
+                BuscaProximoToken();
+                Expressao();
             }
             else
             {
-                registraErroSintatico("Erro Sintático na linha: " + linhaAtual + "\nReconhecido ao atingir a coluna: " + colunaAtual + "\nLinha do Erro: <" + linhaFonte + ">\nExpressao esperada, mas encontrei: " + lexema);
+                RegistraErroSintatico("Erro Sintático na linha: " + _linhaAtual + "\nReconhecido ao atingir a coluna: " + _colunaAtual + "\nLinha do Erro: <" + _linhaFonte + ">\nExpressao esperada, mas encontrei: " + _lexema);
             }
         }
 
         // <exp> ::= <exp> '+' <termo>
         //       |   <exp> '-' <termo>
         //       |   <termo>
-        private void expressao()
+        private void Expressao()
         {
-            termo();
-            if (token == T_SOMA || token == T_SUBTRAI)
+            Termo();
+            if (_token == Soma || _token == Subtrai)
             {
-                buscaProximoToken();
-                expressao();
+                BuscaProximoToken();
+                Expressao();
             }
         }
 
-        private void expressaoAlternativa()
+        private void ExpressaoAlternativa()
         {
-            termo();
-            while (token == T_SOMA || token == T_SUBTRAI)
+            Termo();
+            while (_token == Soma || _token == Subtrai)
             {
-                buscaProximoToken();
-                termo();
+                BuscaProximoToken();
+                Termo();
             }
         }
 
         // <termo> ::= <termo> '*' <fator>
         //         |   <termo> '/' <fator>
         //         |   <fator>
-        private void termo()
+        private void Termo()
         {
-            fator();
-            if (token == T_MULTIPLICA || token == T_DIVIDE)
+            Fator();
+            if (_token == Multiplica || _token == Divide)
             {
-                buscaProximoToken();
-                termo();
+                BuscaProximoToken();
+                Termo();
             }
         }
 
         // <fator> ::= <numero> | <id>  
-        private void fator()
+        private void Fator()
         {
-            if (token == T_NUMERO)
+            if (_token == CompilerCode.Numero)
             {
-                numero();
+                Numero();
             }
             else
             {
-                id();
+                Id();
             }
         }
 
         // <id> ::= [A-Z][A-Z,0-9,_]*
-        private void id()
+        private void Id()
         {
-            if (token == T_ID)
+            if (_token == CompilerCode.Id)
             {
-                buscaProximoToken();
+                BuscaProximoToken();
             }
             else
             {
-                registraErroSintatico("Erro Sintático na linha: " + linhaAtual + "\nReconhecido ao atingir a coluna: " + colunaAtual + "\nLinha do Erro: <" + linhaFonte + ">\nIdentificador esperado, mas encontrei: " + lexema);
+                RegistraErroSintatico("Erro Sintático na linha: " + _linhaAtual + "\nReconhecido ao atingir a coluna: " + _colunaAtual + "\nLinha do Erro: <" + _linhaFonte + ">\nIdentificador esperado, mas encontrei: " + _lexema);
             }
         }
 
         // <numero> ::= [0-9]+
-        private void numero()
+        private void Numero()
         {
-            if (token == T_NUMERO)
+            if (_token == CompilerCode.Numero)
             {
-                buscaProximoToken();
+                BuscaProximoToken();
             }
             else
             {
-                registraErroSintatico("Erro Sintático na linha: " + linhaAtual + "\nReconhecido ao atingir a coluna: " + colunaAtual + "\nLinha do Erro: <" + linhaFonte + ">\nNUMERO esperado, mas encontrei: " + lexema);
+                RegistraErroSintatico("Erro Sintático na linha: " + _linhaAtual + "\nReconhecido ao atingir a coluna: " + _colunaAtual + "\nLinha do Erro: <" + _linhaFonte + ">\nNUMERO esperado, mas encontrei: " + _lexema);
             }
         }
 
-        void movelookAhead()
+        private void MovelookAhead()
         {
 
-            if ((ponteiro + 1) > linhaFonte.Length)
+            if ((_ponteiro + 1) > _linhaFonte.Length)
             {
 
-                linhaAtual++;
-                ponteiro = 0;
+                _linhaAtual++;
+                _ponteiro = 0;
 
 
-                if ((linhaFonte = streamReader.ReadLine()) == null)
+                if ((_linhaFonte = _streamReader.ReadLine()) == null)
                 {
-                    lookAhead = (char)FIM_ARQUIVO;
+                    _lookAhead = (char)FimArquivo;
                 }
                 else
                 {
 
-                    StringBuilder sbLinhaFonte = new StringBuilder(linhaFonte);
+                    StringBuilder sbLinhaFonte = new StringBuilder(_linhaFonte);
                     sbLinhaFonte.Append((char)13).Append((char)10);
-                    linhaFonte = sbLinhaFonte.ToString();
+                    _linhaFonte = sbLinhaFonte.ToString();
 
-                    lookAhead = linhaFonte[ponteiro];
+                    _lookAhead = _linhaFonte[_ponteiro];
                 }
             }
             else
             {
-                lookAhead = linhaFonte[ponteiro];
+                _lookAhead = _linhaFonte[_ponteiro];
             }
 
-            if ((lookAhead >= 'a') &&
-                 (lookAhead <= 'z'))
+            if ((_lookAhead >= 'a') &&
+                 (_lookAhead <= 'z'))
             {
-                lookAhead = (char)(lookAhead - 'a' + 'A');
+                _lookAhead = (char)(_lookAhead - 'a' + 'A');
             }
 
-            ponteiro++;
-            colunaAtual = ponteiro + 1;
+            _ponteiro++;
+            _colunaAtual = _ponteiro + 1;
         }
 
-        void buscaProximoToken()
+        private void BuscaProximoToken()
         {
             int i, j;
 
             StringBuilder sbLexema = new StringBuilder("");
 
-            while ((lookAhead == 9) ||
-                  (lookAhead == '\n') ||
-                  (lookAhead == 8) ||
-                  (lookAhead == 11) ||
-                  (lookAhead == 12) ||
-                  (lookAhead == '\r') ||
-                  (lookAhead == 32))
+            while ((_lookAhead == 9) ||
+                  (_lookAhead == '\n') ||
+                  (_lookAhead == 8) ||
+                  (_lookAhead == 11) ||
+                  (_lookAhead == 12) ||
+                  (_lookAhead == '\r') ||
+                  (_lookAhead == 32))
             {
-                movelookAhead();
+                MovelookAhead();
             }
 
             /*--------------------------------------------------------------*
              * Caso o primeiro caracter seja alfabetico, procuro capturar a *
              * sequencia de caracteres que se segue a ele e classifica-la   *
              *--------------------------------------------------------------*/
-            if ((lookAhead >= 'A') && (lookAhead <= 'Z'))
+            if ((_lookAhead >= 'A') && (_lookAhead <= 'Z'))
             {
-                sbLexema.Append(lookAhead);
-                movelookAhead();
+                sbLexema.Append(_lookAhead);
+                MovelookAhead();
 
-                while (((lookAhead >= 'A') && (lookAhead <= 'Z')) ||
-                        ((lookAhead >= '0') && (lookAhead <= '9')) ||
-                          (lookAhead == '_'))
+                while (((_lookAhead >= 'A') && (_lookAhead <= 'Z')) ||
+                        ((_lookAhead >= '0') && (_lookAhead <= '9')) ||
+                          (_lookAhead == '_'))
                 {
-                    sbLexema.Append(lookAhead);
-                    movelookAhead();
+                    sbLexema.Append(_lookAhead);
+                    MovelookAhead();
                 }
 
-                lexema = sbLexema.ToString();
+                _lexema = sbLexema.ToString();
 
                 /* Classifico o meu token como palavra reservada ou id */
-                if (lexema.Equals("CABO"))
-                    token = T_CABO;
-                else if (lexema.Equals("MEMOSTRA"))
-                    token = T_MEMOSTRA;
-                else if (lexema.Equals("MECAPTURA"))
-                    token = T_MECAPTURA;
-                else if (lexema.Equals("MEREPETE"))
-                    token = T_MEREPETE;
-                else if (lexema.Equals("VIRA"))
-                    token = T_VIRA;
+                if (_lexema.Equals("CABO"))
+                    _token = Cabo;
+                else if (_lexema.Equals("MEMOSTRA"))
+                    _token = Memostra;
+                else if (_lexema.Equals("MECAPTURA"))
+                    _token = Mecaptura;
+                else if (_lexema.Equals("MEREPETE"))
+                    _token = Merepete;
+                else if (_lexema.Equals("VIRA"))
+                    _token = Vira;
                 else
                 {
-                    token = T_ID;
+                    _token = CompilerCode.Id;
                 }
             }
-            else if ((lookAhead >= '0') && (lookAhead <= '9'))
+            else if ((_lookAhead >= '0') && (_lookAhead <= '9'))
             {
-                sbLexema.Append(lookAhead);
-                movelookAhead();
-                while ((lookAhead >= '0') && (lookAhead <= '9'))
+                sbLexema.Append(_lookAhead);
+                MovelookAhead();
+                while ((_lookAhead >= '0') && (_lookAhead <= '9'))
                 {
-                    sbLexema.Append(lookAhead);
-                    movelookAhead();
+                    sbLexema.Append(_lookAhead);
+                    MovelookAhead();
                 }
-                if (lookAhead == '.')
+                if (_lookAhead == '.')
                 {
-                    sbLexema.Append(lookAhead);
-                    movelookAhead();
-                    while ((lookAhead >= '0') && (lookAhead <= '9'))
+                    sbLexema.Append(_lookAhead);
+                    MovelookAhead();
+                    while ((_lookAhead >= '0') && (_lookAhead <= '9'))
                     {
-                        sbLexema.Append(lookAhead);
-                        movelookAhead();
+                        sbLexema.Append(_lookAhead);
+                        MovelookAhead();
                     }
                 }
-                token = T_NUMERO;
+                _token = CompilerCode.Numero;
             }
-            else if (lookAhead == '}')
+            else if (_lookAhead == '}')
             {
-                sbLexema.Append(lookAhead);
-                movelookAhead();
-                if (lookAhead == '}')
+                sbLexema.Append(_lookAhead);
+                MovelookAhead();
+                if (_lookAhead == '}')
                 {
-                    sbLexema.Append(lookAhead);
-                    movelookAhead();
-                    token = T_ABREPROG;
+                    sbLexema.Append(_lookAhead);
+                    MovelookAhead();
+                    _token = Abreprog;
                 }
                 else
                 {
-                    token = T_ERRO_LEX;
+                    _token = ErroLex;
                 }
             }
-            else if (lookAhead == '{')
+            else if (_lookAhead == '{')
             {
-                sbLexema.Append(lookAhead);
-                movelookAhead();
-                if (lookAhead == '{')
+                sbLexema.Append(_lookAhead);
+                MovelookAhead();
+                if (_lookAhead == '{')
                 {
-                    sbLexema.Append(lookAhead);
-                    movelookAhead();
-                    token = T_FECHAPROG;
+                    sbLexema.Append(_lookAhead);
+                    MovelookAhead();
+                    _token = Fechaprog;
                 }
                 else
                 {
-                    token = T_ERRO_LEX;
+                    _token = ErroLex;
                 }
             }
-            else if (lookAhead == '>')
+            else if (_lookAhead == '>')
             {
-                sbLexema.Append(lookAhead);
-                movelookAhead();
-                if (lookAhead == '=')
+                sbLexema.Append(_lookAhead);
+                MovelookAhead();
+                if (_lookAhead == '=')
                 {
-                    sbLexema.Append(lookAhead);
-                    movelookAhead();
-                    token = T_MAIORIGUAL;
+                    sbLexema.Append(_lookAhead);
+                    MovelookAhead();
+                    _token = Maiorigual;
                 }
                 else
                 {
-                    token = T_MAIOR;
+                    _token = Maior;
                 }
             }
-            else if (lookAhead == '<')
+            else if (_lookAhead == '<')
             {
-                sbLexema.Append(lookAhead);
-                movelookAhead();
-                if (lookAhead == '>')
+                sbLexema.Append(_lookAhead);
+                MovelookAhead();
+                if (_lookAhead == '>')
                 {
-                    sbLexema.Append(lookAhead);
-                    movelookAhead();
-                    token = T_DIFERENTE;
+                    sbLexema.Append(_lookAhead);
+                    MovelookAhead();
+                    _token = Diferente;
                 }
                 else
                 {
-                    if (lookAhead == '=')
+                    if (_lookAhead == '=')
                     {
-                        sbLexema.Append(lookAhead);
-                        movelookAhead();
-                        token = T_MENORIGUAL;
-                    }
-                    else
-                    {
-                        token = T_MENOR;
-                    }
-                }
-            }
-            else if (lookAhead == '=')
-            {
-                sbLexema.Append(lookAhead);
-                movelookAhead();
-                if (lookAhead == '=')
-                {
-                    sbLexema.Append(lookAhead);
-                    movelookAhead();
-                    if (lookAhead == '>')
-                    {
-                        sbLexema.Append(lookAhead);
-                        movelookAhead();
-                        token = T_REPETE_PARA;
+                        sbLexema.Append(_lookAhead);
+                        MovelookAhead();
+                        _token = Menorigual;
                     }
                     else
                     {
-                        token = T_IGUAL;
+                        _token = Menor;
                     }
                 }
-                else if (lookAhead == '>')
+            }
+            else if (_lookAhead == '=')
+            {
+                sbLexema.Append(_lookAhead);
+                MovelookAhead();
+                if (_lookAhead == '=')
                 {
-                    sbLexema.Append(lookAhead);
-                    movelookAhead();
-                    token = T_REPETE_DE;
+                    sbLexema.Append(_lookAhead);
+                    MovelookAhead();
+                    if (_lookAhead == '>')
+                    {
+                        sbLexema.Append(_lookAhead);
+                        MovelookAhead();
+                        _token = RepetePara;
+                    }
+                    else
+                    {
+                        _token = Igual;
+                    }
+                }
+                else if (_lookAhead == '>')
+                {
+                    sbLexema.Append(_lookAhead);
+                    MovelookAhead();
+                    _token = RepeteDe;
                 }
                 else
                 {
-                    token = T_ERRO_LEX;
-                    mensagemDeErro = "Erro Léxico na linha: " + linhaAtual + "\nReconhecido ao atingir a coluna: " + colunaAtual + "\nLinha do Erro: <" + linhaFonte + ">\nToken desconhecido: " + lookAhead;
-                    sbLexema.Append(lookAhead);
+                    _token = ErroLex;
+                    _mensagemDeErro = "Erro Léxico na linha: " + _linhaAtual + "\nReconhecido ao atingir a coluna: " + _colunaAtual + "\nLinha do Erro: <" + _linhaFonte + ">\nToken desconhecido: " + _lookAhead;
+                    sbLexema.Append(_lookAhead);
                 }
             }
-            else if (lookAhead == ']')
+            else if (_lookAhead == ']')
             {
-                sbLexema.Append(lookAhead);
-                token = T_ABRE_BLOCO;
-                movelookAhead();
+                sbLexema.Append(_lookAhead);
+                _token = AbreBloco;
+                MovelookAhead();
             }
-            else if (lookAhead == '[')
+            else if (_lookAhead == '[')
             {
-                sbLexema.Append(lookAhead);
-                token = T_FECHA_BLOCO;
-                movelookAhead();
+                sbLexema.Append(_lookAhead);
+                _token = FechaBloco;
+                MovelookAhead();
             }
-            else if (lookAhead == '(')
+            else if (_lookAhead == '(')
             {
-                sbLexema.Append(lookAhead);
-                token = T_FECHA_PAR;
-                movelookAhead();
+                sbLexema.Append(_lookAhead);
+                _token = FechaPar;
+                MovelookAhead();
             }
-            else if (lookAhead == ')')
+            else if (_lookAhead == ')')
             {
-                sbLexema.Append(lookAhead);
-                token = T_ABRE_PAR;
-                movelookAhead();
+                sbLexema.Append(_lookAhead);
+                _token = AbrePar;
+                MovelookAhead();
             }
-            else if (lookAhead == '+')
+            else if (_lookAhead == '+')
             {
-                sbLexema.Append(lookAhead);
-                token = T_SOMA;
-                movelookAhead();
+                sbLexema.Append(_lookAhead);
+                _token = Soma;
+                MovelookAhead();
             }
-            else if (lookAhead == '-')
+            else if (_lookAhead == '-')
             {
-                sbLexema.Append(lookAhead);
-                token = T_SUBTRAI;
-                movelookAhead();
+                sbLexema.Append(_lookAhead);
+                _token = Subtrai;
+                MovelookAhead();
             }
-            else if (lookAhead == '*')
+            else if (_lookAhead == '*')
             {
-                sbLexema.Append(lookAhead);
-                token = T_MULTIPLICA;
-                movelookAhead();
+                sbLexema.Append(_lookAhead);
+                _token = Multiplica;
+                MovelookAhead();
             }
-            else if (lookAhead == '/')
+            else if (_lookAhead == '/')
             {
-                sbLexema.Append(lookAhead);
-                token = T_DIVIDE;
-                movelookAhead();
+                sbLexema.Append(_lookAhead);
+                _token = Divide;
+                MovelookAhead();
             }
-            else if (((int)lookAhead) == (int)FIM_ARQUIVO)
+            else if (((int)_lookAhead) == (int)FimArquivo)
             {
-                token = T_FIM_FONTE;
+                _token = FimFonte;
             }
             else
             {
-                token = T_ERRO_LEX;
-                mensagemDeErro = "Erro Léxico na linha: " + linhaAtual + "\nReconhecido ao atingir a coluna: " + colunaAtual + "\nLinha do Erro: <" + linhaFonte + ">\nToken desconhecido: " + lookAhead;
-                sbLexema.Append(lookAhead);
+                _token = ErroLex;
+                _mensagemDeErro = "Erro Léxico na linha: " + _linhaAtual + "\nReconhecido ao atingir a coluna: " + _colunaAtual + "\nLinha do Erro: <" + _linhaFonte + ">\nToken desconhecido: " + _lookAhead;
+                sbLexema.Append(_lookAhead);
             }
 
-            lexema = sbLexema.ToString();
+            _lexema = sbLexema.ToString();
         }
 
-        void mostraToken()
+        private void MostraToken()
         {
 
             StringBuilder tokenLexema = new StringBuilder("");
 
-            switch (token)
+            switch (_token)
             {
-                case T_ABREPROG: tokenLexema.Append("T_ABREPROG"); break;
-                case T_FECHAPROG: tokenLexema.Append("T_FECHAPROG"); break;
-                case T_ABRE_PAR: tokenLexema.Append("T_ABRE_PAR"); break;
-                case T_FECHA_PAR: tokenLexema.Append("T_FECHA_PAR"); break;
-                case T_ID: tokenLexema.Append("T_ID"); break;
-                case T_NUMERO: tokenLexema.Append("T_NUMERO"); break;
-                case T_CABO: tokenLexema.Append("T_CABO"); break;
-                case T_MEMOSTRA: tokenLexema.Append("T_MEMOSTRA"); break;
-                case T_MECAPTURA: tokenLexema.Append("T_MECAPTURA"); break;
-                case T_VIRA: tokenLexema.Append("T_VIRA"); break;
-                case T_SOMA: tokenLexema.Append("T_SOMA"); break;
-                case T_SUBTRAI: tokenLexema.Append("T_SUBTRAI"); break;
-                case T_DIVIDE: tokenLexema.Append("T_DIVIDE"); break;
-                case T_MULTIPLICA: tokenLexema.Append("T_MULTIPLICA"); break;
-                case T_MENOR: tokenLexema.Append("T_MENOR"); break;
-                case T_MENORIGUAL: tokenLexema.Append("T_MENORIGUAL"); break;
-                case T_DIFERENTE: tokenLexema.Append("T_DIFERENTE"); break;
-                case T_MAIOR: tokenLexema.Append("T_MAIOR"); break;
-                case T_MAIORIGUAL: tokenLexema.Append("T_MAIORIGUAL"); break;
-                case T_IGUAL: tokenLexema.Append("T_IGUAL"); break;
+                case Abreprog: tokenLexema.Append("T_ABREPROG"); break;
+                case Fechaprog: tokenLexema.Append("T_FECHAPROG"); break;
+                case AbrePar: tokenLexema.Append("T_ABRE_PAR"); break;
+                case FechaPar: tokenLexema.Append("T_FECHA_PAR"); break;
+                case CompilerCode.Id: tokenLexema.Append("T_ID"); break;
+                case CompilerCode.Numero: tokenLexema.Append("T_NUMERO"); break;
+                case Cabo: tokenLexema.Append("T_CABO"); break;
+                case Memostra: tokenLexema.Append("T_MEMOSTRA"); break;
+                case Mecaptura: tokenLexema.Append("T_MECAPTURA"); break;
+                case Vira: tokenLexema.Append("T_VIRA"); break;
+                case Soma: tokenLexema.Append("T_SOMA"); break;
+                case Subtrai: tokenLexema.Append("T_SUBTRAI"); break;
+                case Divide: tokenLexema.Append("T_DIVIDE"); break;
+                case Multiplica: tokenLexema.Append("T_MULTIPLICA"); break;
+                case Menor: tokenLexema.Append("T_MENOR"); break;
+                case Menorigual: tokenLexema.Append("T_MENORIGUAL"); break;
+                case Diferente: tokenLexema.Append("T_DIFERENTE"); break;
+                case Maior: tokenLexema.Append("T_MAIOR"); break;
+                case Maiorigual: tokenLexema.Append("T_MAIORIGUAL"); break;
+                case Igual: tokenLexema.Append("T_IGUAL"); break;
 
-                case T_MEREPETE: tokenLexema.Append("T_MEREPETE"); break;
-                case T_REPETE_DE: tokenLexema.Append("T_REPETE_DE"); break;
-                case T_REPETE_PARA: tokenLexema.Append("T_REPETE_PARA"); break;
-                case T_ABRE_BLOCO: tokenLexema.Append("T_ABRE_BLOCO"); break;
-                case T_FECHA_BLOCO: tokenLexema.Append("T_FECHA_BLOCO"); break;
+                case Merepete: tokenLexema.Append("T_MEREPETE"); break;
+                case RepeteDe: tokenLexema.Append("T_REPETE_DE"); break;
+                case RepetePara: tokenLexema.Append("T_REPETE_PARA"); break;
+                case AbreBloco: tokenLexema.Append("T_ABRE_BLOCO"); break;
+                case FechaBloco: tokenLexema.Append("T_FECHA_BLOCO"); break;
 
-                case T_FIM_FONTE: tokenLexema.Append("T_FIM_FONTE"); break;
-                case T_ERRO_LEX: tokenLexema.Append("T_ERRO_LEX"); break;
-                case T_NULO: tokenLexema.Append("T_NULO"); break;
+                case FimFonte: tokenLexema.Append("T_FIM_FONTE"); break;
+                case ErroLex: tokenLexema.Append("T_ERRO_LEX"); break;
+                case Nulo: tokenLexema.Append("T_NULO"); break;
                 default: tokenLexema.Append("N/A"); break;
             }
 
-            Console.WriteLine(tokenLexema.ToString() + " ( " + lexema + " )");
+            Console.WriteLine(tokenLexema.ToString() + " ( " + _lexema + " )");
 
-            acumulaToken(tokenLexema.ToString() + " ( " + lexema + " )");
-            tokenLexema.Append(lexema);
+            AcumulaToken(tokenLexema.ToString() + " ( " + _lexema + " )");
+            tokenLexema.Append(_lexema);
         }
 
-        private void acumulaToken(String tokenIdentificado)
+        private void AcumulaToken(string tokenIdentificado)
         {
-            tokensIdentificados.Append(tokenIdentificado);
-            tokensIdentificados.Append("\n");
+            _tokensIdentificados.Append(tokenIdentificado);
+            _tokensIdentificados.Append("\n");
         }
 
-        void registraErroSintatico(String msg)
+        private void RegistraErroSintatico(string msg)
         {
-            if (estadoCompilacao == E_SEM_ERROS)
+            if (_estadoCompilacao == ESemErros)
             {
-                estadoCompilacao = E_ERRO_SINTATICO;
-                mensagemDeErro = msg;
+                _estadoCompilacao = EErroSintatico;
+                _mensagemDeErro = msg;
             }
         }
 
-        private void showMessageDialog(string mensagemDeErro, string message)
+        private void ShowMessageDialog(string mensagemDeErro, string message)
         {
             Console.WriteLine(mensagemDeErro, message);
         }

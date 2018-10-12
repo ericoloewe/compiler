@@ -1,21 +1,20 @@
-﻿using System;
-using System.IO;
-using compiler;
+﻿using System.IO;
+using Compiler;
 
-namespace console
+namespace Console
 {
-    class Program
+    internal class Program
     {
-        static string IN_FILE_PATH = "../../java/para.me";
-        static Syntactic syntactic = new Syntactic();
-        static Semantic semantic = new Semantic();
+        private static string _inFilePath = "../../java/para.me";
+        private static Syntactic _syntactic = new Syntactic();
+        private static Semantic _semantic = new Semantic();
 
-        static void Main(string[] args)
+        private static void Main(string[] args)
         {
-            var stream = semantic.Run(File.Open(IN_FILE_PATH, FileMode.Open));
+            var stream = _semantic.Run(File.Open(_inFilePath, FileMode.Open));
             var streamReader = new StreamReader(stream);
 
-            Console.WriteLine(streamReader.ReadToEnd());
+            System.Console.WriteLine(streamReader.ReadToEnd());
         }
     }
 }
